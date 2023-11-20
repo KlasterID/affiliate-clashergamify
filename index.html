@@ -1,347 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
-  <script>
-    (function () {
-      const e = () => {};
-      let t = null,
-        o = null,
-        n = [],
-        i = e,
-        r = e,
-        a = e,
-        s = e;
-      try {
-        (i = window.fetch),
-          (r = window.XMLHttpRequest.prototype.open),
-          (a = window.XMLHttpRequest.prototype.send),
-          (s = window.XMLHttpRequest.prototype.setRequestHeader);
-      } catch (e) {
-        0;
-      }
-      function c(e) {
-        return !(
-          !window.XMLHttpRequest ||
-          !window.XMLHttpRequest.prototype ||
-          "function" != typeof window.XMLHttpRequest.prototype[e]
-        );
-      }
-      function d() {
-        let e = [];
-        return {
-          subscribe: (t) => {
-            e.push(t);
-          },
-          next: (t) => {
-            e.length && e.forEach((e) => e(t));
-          },
-          clear: () => {
-            e.length = 0;
-          },
-        };
-      }
-      const l = new d(),
-        p = new WeakMap(),
-        u = new WeakMap(),
-        E = new WeakMap();
-      c("open") &&
-        c("send") &&
-        c("setRequestHeader") &&
-        ((window.XMLHttpRequest.prototype.open = function (...e) {
-          if (
-            (p.set(this, { method: (e[0] && e[0].toUpperCase()) || "GET" }),
-            !0 === this.__amicabletbecoxhro || "OFF" === t)
-          ) {
-            r.apply(this, e);
-            const t = u.get(this);
-            t && t.next();
-          } else {
-            const t = u.get(this) || new d();
-            u.set(this, t),
-              (this.__headersReady = (function (e, t) {
-                let o = null;
-                return () => {
-                  o && clearTimeout(o),
-                    (o = setTimeout(() => {
-                      e();
-                    }, t));
-                };
-              })(() => {
-                this.__onPendingHeadersSet && this.__onPendingHeadersSet();
-              }, 50)),
-              l.subscribe(() => {
-                c("open") &&
-                  window.XMLHttpRequest.prototype.open.apply(this, e);
-              });
-          }
-        }),
-        (window.XMLHttpRequest.prototype.setRequestHeader = function (...e) {
-          if (this.readyState === XMLHttpRequest.OPENED || "OFF" === t)
-            s.apply(this, e);
-          else {
-            E.set(this, !0);
-            const t = u.get(this);
-            t &&
-              t.subscribe(() => {
-                s.apply(this, e), this.__headersReady();
-              });
-          }
-        }),
-        (window.XMLHttpRequest.prototype.send = function (e) {
-          if (
-            (this.addEventListener("readystatechange", () => {
-              if ("OFF" !== o && this.readyState === XMLHttpRequest.DONE)
-                try {
-                  const t = p.get(this),
-                    i =
-                      (t &&
-                        "string" == typeof t.method &&
-                        t.method.toUpperCase()) ||
-                      "";
-                  let r,
-                    a = [];
-                  try {
-                    const e = this.getAllResponseHeaders();
-                    a = (e && e.trim().split(/[\r\n]+/)).reduce((e, t) => {
-                      try {
-                        const o = t.split(": "),
-                          n = o.shift(),
-                          i = o.join(": ");
-                        e.push({ active: !0, header: n, value: i });
-                      } catch (e) {}
-                      return e;
-                    }, []);
-                  } catch (e) {
-                    a = [];
-                  }
-                  try {
-                    r =
-                      "string" == typeof this.response
-                        ? this.response
-                        : JSON.stringify(this.response);
-                  } catch (e) {
-                    r = this.response;
-                  }
-                  const s = {
-                    type: "STASH_REQUESTS",
-                    payload: [
-                      [
-                        {
-                          method: i,
-                          requestURL: this.responseURL,
-                          responsePayload: r,
-                          requestPayload: e,
-                          status: this.status,
-                          timestamp: Date.now(),
-                          responseHeaders: a,
-                        },
-                      ],
-                    ],
-                  };
-                  "ON" === o
-                    ? window.postMessage(s, "*")
-                    : n.push(s.payload[0][0]);
-                } catch (e) {}
-            }),
-            "OFF" === t)
-          )
-            a.call(this, e);
-          else if (E.get(this))
-            this.__onPendingHeadersSet = () => {
-              E.delete(this),
-                c("send") &&
-                  this.readyState === XMLHttpRequest.OPENED &&
-                  window.XMLHttpRequest.prototype.send.call(this, e),
-                (this.__onPendingHeadersSet = null);
-            };
-          else if (
-            this.readyState === XMLHttpRequest.OPENED &&
-            !0 === this.__amicabletbebypoxhrs
-          ) {
-            Object.defineProperty(this, "readyState", {
-              writable: !0,
-              configurable: !0,
-              value: XMLHttpRequest.LOADING,
-            });
-            const e = new Event("readystatechange");
-            this.dispatchEvent(e);
-          } else if (
-            this.readyState === XMLHttpRequest.OPENED &&
-            !0 === this.__amicabletbecoxhrs
-          )
-            a.call(this, e);
-          else {
-            const t = u.get(this);
-            t &&
-              t.subscribe(() => {
-                c("send") &&
-                  this.readyState === XMLHttpRequest.OPENED &&
-                  window.XMLHttpRequest.prototype.send.call(this, e);
-              });
-          }
-        })),
-        (window.fetch = (...e) => {
-          const r = e[0];
-          let a = e[1];
-          const { url: s, method: c } = (function (e, t) {
-              let o,
-                n = "GET";
-              return (
-                "string" == typeof e
-                  ? ((o = e), (n = t?.method?.toUpperCase() || "GET"))
-                  : "string" == typeof e?.search
-                  ? ((o = e.toString()),
-                    (n = t?.method?.toUpperCase() || "GET"))
-                  : ((o = e.url || ""),
-                    (n = e?.method?.toUpperCase() || "GET")),
-                { method: n, url: o }
-              );
-            })(r, a),
-            d = (function (e, t) {
-              return new Promise((o) => {
-                if ("string" == typeof e || "string" == typeof e?.search) {
-                  const e = (t && t.body) || null;
-                  o(e);
-                } else
-                  try {
-                    e.clone()
-                      .text()
-                      .then((e) => {
-                        o(e);
-                      })
-                      .catch((e) => {
-                        o(null);
-                      });
-                  } catch (e) {
-                    o(null);
-                  }
-              });
-            })(r, a);
-          let p = !1;
-          try {
-            if ("string" == typeof a?.headers?.amicabletbecof)
-              switch (((p = !0), a?.headers?.amicabletbecof)) {
-                case "no-init":
-                  a = void 0;
-                  break;
-                case "no-headers":
-                  a.headers = void 0;
-                  break;
-                default:
-                  delete a.headers.amicabletbecof;
-              }
-          } catch (e) {
-            0;
-          }
-          return p || "OFF" === t
-            ? i(r, a).then(async (e) => {
-                if ("OFF" === o) return e;
-                try {
-                  const t = await d;
-                  let i;
-                  try {
-                    i = t.replace(/\s/gi, "");
-                  } catch (e) {
-                    i = t;
-                  }
-                  const r = e.clone(),
-                    a = await r.text();
-                  let l = [];
-                  try {
-                    for (const e of r?.headers?.entries()) {
-                      const t = e[0],
-                        o = e[1];
-                      l.push({ active: !0, header: t, value: o });
-                    }
-                  } catch (e) {
-                    l = [];
-                  }
-                  const p = {
-                    type: "STASH_REQUESTS",
-                    payload: [
-                      [
-                        {
-                          method: (c && c.toUpperCase()) || "GET",
-                          requestURL: s,
-                          responsePayload: a,
-                          requestPayload: i,
-                          responseHeaders: l,
-                          status: e.status,
-                          timestamp: Date.now(),
-                        },
-                      ],
-                    ],
-                  };
-                  "ON" === o
-                    ? window.postMessage(p, "*")
-                    : n.push(p.payload[0][0]);
-                } catch (e) {}
-                return e;
-              })
-            : ((...e) =>
-                new Promise((t) => {
-                  l.subscribe(() => {
-                    t(window.fetch(...e));
-                  });
-                }))(...e);
-        }),
-        l.subscribe(() => {
-          try {
-            window.postMessage({
-              type: "__TWEAK_BOOTSTRAP_FINISHED__",
-              payload: [],
-            });
-          } catch (e) {
-            0;
-          }
-        });
-      const h = ["ON", "OFF"];
-      setTimeout(() => {
-        (t && h.includes(t)) || ((t = "OFF"), l.next());
-      }, 5e3),
-        (window.__onttis = (e) => {
-          e &&
-            h.includes(e) &&
-            (t && h.includes(t) ? (t = e) : ((t = e), l.next()));
-        }),
-        (window.__onttss__ = (e, t) => {
-          if (e && h.includes(e)) {
-            if ("OFF" === e && "user" === t && n.length) n = [];
-            else if ("ON" === e && "system" === t && n.length)
-              try {
-                window.postMessage({ type: "STASH_REQUESTS", payload: [n] });
-              } catch (e) {
-                0;
-              }
-            (n = []), (o = e);
-          }
-        }),
-        (window.__textm__ = "c2");
-    })();
-  </script>
   <head>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
     <title>
-      Topup Game dan Pulsa Termurah Tercepat Terpercaya - Winky Games
+      Topup Game dan Pulsa Termurah Tercepat Terpercaya - Clasher Gamify
     </title>
     <meta
       name="description"
-      content="Winky Games adalah situs topup game dan pulsa yang paling murah, paling cepat dan paling terpercaya."
+      content="Clasher Gamify adalah situs topup game dan pulsa yang paling murah, paling cepat dan paling terpercaya."
     />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="index, follow" />
     <meta charset="UTF-8" />
     <meta
       property="og:url"
-      content="https://www.klastergames.com?aff=081336611571"
+      content="https://www.klastergames.com?aff=082386531389"
     />
     <meta property="og:type" content="website" />
     <meta
       property="og:title"
-      content="Topup Game dan Pulsa Termurah Tercepat Terpercaya - Winky Games"
+      content="Topup Game dan Pulsa Termurah Tercepat Terpercaya - Clasher Gamify"
     />
     <meta
       property="og:description"
-      content="Winky Games adalah situs topup game dan pulsa yang paling murah, paling cepat dan paling terpercaya."
+      content="Clasher Gamify adalah situs topup game dan pulsa yang paling murah, paling cepat dan paling terpercaya."
     />
     <meta
       property="og:image"
@@ -351,15 +33,15 @@
     <meta property="twitter:domain" content="klastergames.com" />
     <meta
       property="twitter:url"
-      content="https://www.klastergames.com?aff=081336611571"
+      content="https://www.klastergames.com?aff=082386531389"
     />
     <meta
       name="twitter:title"
-      content="Topup Game dan Pulsa Termurah Tercepat Terpercaya - Winky Games"
+      content="Topup Game dan Pulsa Termurah Tercepat Terpercaya - Clasher Gamify"
     />
     <meta
       name="twitter:description"
-      content="Winky Games adalah situs topup game dan pulsa yang paling murah, paling cepat dan paling terpercaya."
+      content="Clasher Gamify adalah situs topup game dan pulsa yang paling murah, paling cepat dan paling terpercaya."
     />
     <meta
       name="twitter:image"
@@ -426,7 +108,7 @@
           <div>
             <div class="bg-[#529e52] text-white">
               <div class="font-logo text-base font-bold py-3 px-5">
-                <h1>Winky Games - Termurah Terpercaya</h1>
+                <h1>Clasher Gamify - Termurah Terpercaya</h1>
               </div>
               <div class="w-full relative aspect-[1.91/1]">
                 <img
@@ -473,7 +155,7 @@
                 >
                   <a
                     class="block relative aspect-square"
-                    href="https://www.klastergames.com/mobile-legends-bang-bang?aff=081336611571"
+                    href="https://www.klastergames.com/mobile-legends-bang-bang?aff=082386531389"
                     ><img
                       alt="Topup Mobile Legends: Bang Bang Termurah Terpercaya"
                       sizes="100vw"
@@ -504,7 +186,7 @@
                       " /></a
                   ><a
                     class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
-                    href="https://www.klastergames.com/mobile-legends-bang-bang?aff=081336611571"
+                    href="https://www.klastergames.com/mobile-legends-bang-bang?aff=082386531389"
                     >Mobile Legends: Bang Bang</a
                   >
                 </div>
@@ -513,7 +195,7 @@
                 >
                   <a
                     class="block relative aspect-square"
-                    href="https://www.klastergames.com/free-fire?aff=081336611571"
+                    href="https://www.klastergames.com/free-fire?aff=082386531389"
                     ><img
                       alt="Topup Free Fire Termurah Terpercaya"
                       sizes="100vw"
@@ -544,7 +226,7 @@
                       " /></a
                   ><a
                     class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
-                    href="https://www.klastergames.com/free-fire?aff=081336611571"
+                    href="https://www.klastergames.com/free-fire?aff=082386531389"
                     >Free Fire</a
                   >
                 </div>
@@ -553,7 +235,7 @@
                 >
                   <a
                     class="block relative aspect-square"
-                    href="https://www.klastergames.com/genshin-impact?aff=081336611571"
+                    href="https://www.klastergames.com/genshin-impact?aff=082386531389"
                     ><img
                       alt="Topup Genshin Impact Termurah Terpercaya"
                       sizes="100vw"
@@ -584,7 +266,7 @@
                       " /></a
                   ><a
                     class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
-                    href="https://www.klastergames.com/genshin-impact?aff=081336611571"
+                    href="https://www.klastergames.com/genshin-impact?aff=082386531389"
                     >Genshin Impact</a
                   >
                 </div>
@@ -593,7 +275,7 @@
                 >
                   <a
                     class="block relative aspect-square"
-                    href="https://www.klastergames.com/valorant?aff=081336611571"
+                    href="https://www.klastergames.com/valorant?aff=082386531389"
                     ><img
                       alt="Topup Valorant Termurah Terpercaya"
                       sizes="100vw"
@@ -624,7 +306,7 @@
                       " /></a
                   ><a
                     class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
-                    href="https://www.klastergames.com/valorant?aff=081336611571"
+                    href="https://www.klastergames.com/valorant?aff=082386531389"
                     >Valorant</a
                   >
                 </div>
@@ -633,7 +315,7 @@
                 >
                   <a
                     class="block relative aspect-square"
-                    href="https://www.klastergames.com/super-sus?aff=081336611571"
+                    href="https://www.klastergames.com/super-sus?aff=082386531389"
                     ><img
                       alt="Topup Super Sus Termurah Terpercaya"
                       sizes="100vw"
@@ -664,7 +346,7 @@
                       " /></a
                   ><a
                     class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
-                    href="https://www.klastergames.com/super-sus?aff=081336611571"
+                    href="https://www.klastergames.com/super-sus?aff=082386531389"
                     >Super Sus</a
                   >
                 </div>
@@ -673,7 +355,7 @@
                 >
                   <a
                     class="block relative aspect-square"
-                    href="https://www.klastergames.com/call-of-duty-mobile?aff=081336611571"
+                    href="https://www.klastergames.com/call-of-duty-mobile?aff=082386531389"
                     ><img
                       alt="Topup Call Of Duty Mobile Termurah Terpercaya"
                       sizes="100vw"
@@ -704,7 +386,7 @@
                       " /></a
                   ><a
                     class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
-                    href="https://www.klastergames.com/call-of-duty-mobile?aff=081336611571"
+                    href="https://www.klastergames.com/call-of-duty-mobile?aff=082386531389"
                     >Call Of Duty Mobile</a
                   >
                 </div>
@@ -713,7 +395,7 @@
                 >
                   <a
                     class="block relative aspect-square"
-                    href="https://www.klastergames.com/arena-of-valor?aff=081336611571"
+                    href="https://www.klastergames.com/arena-of-valor?aff=082386531389"
                     ><img
                       alt="Topup Arena Of Valor Termurah Terpercaya"
                       sizes="100vw"
@@ -744,7 +426,7 @@
                       " /></a
                   ><a
                     class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
-                    href="https://www.klastergames.com/arena-of-valor?aff=081336611571"
+                    href="https://www.klastergames.com/arena-of-valor?aff=082386531389"
                     >Arena Of Valor</a
                   >
                 </div>
@@ -753,7 +435,7 @@
                 >
                   <a
                     class="block relative aspect-square"
-                    href="https://www.klastergames.com/fc-mobile?aff=081336611571"
+                    href="https://www.klastergames.com/fc-mobile?aff=082386531389"
                     ><img
                       alt="Topup FC Mobile Termurah Terpercaya"
                       sizes="100vw"
@@ -784,7 +466,7 @@
                       " /></a
                   ><a
                     class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
-                    href="https://www.klastergames.com/fc-mobile?aff=081336611571"
+                    href="https://www.klastergames.com/fc-mobile?aff=082386531389"
                     >FC Mobile</a
                   >
                 </div>
@@ -793,7 +475,7 @@
                 >
                   <a
                     class="block relative aspect-square"
-                    href="https://www.klastergames.com/garena-undawn-indonesia?aff=081336611571"
+                    href="https://www.klastergames.com/garena-undawn-indonesia?aff=082386531389"
                     ><img
                       alt="Topup Garena Undawn ID Termurah Terpercaya"
                       sizes="100vw"
@@ -824,7 +506,7 @@
                       " /></a
                   ><a
                     class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
-                    href="https://www.klastergames.com/garena-undawn-indonesia?aff=081336611571"
+                    href="https://www.klastergames.com/garena-undawn-indonesia?aff=082386531389"
                     >Garena Undawn ID</a
                   >
                 </div>
@@ -833,7 +515,7 @@
                 >
                   <a
                     class="block relative aspect-square"
-                    href="https://www.klastergames.com/honkai-star-rail?aff=081336611571"
+                    href="https://www.klastergames.com/honkai-star-rail?aff=082386531389"
                     ><img
                       alt="Topup Honkai Star Rail Termurah Terpercaya"
                       sizes="100vw"
@@ -864,7 +546,7 @@
                       " /></a
                   ><a
                     class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
-                    href="https://www.klastergames.com/honkai-star-rail?aff=081336611571"
+                    href="https://www.klastergames.com/honkai-star-rail?aff=082386531389"
                     >Honkai Star Rail</a
                   >
                 </div>
@@ -873,7 +555,7 @@
                 >
                   <a
                     class="block relative aspect-square"
-                    href="https://www.klastergames.com/metal-slug-awekening?aff=081336611571"
+                    href="https://www.klastergames.com/metal-slug-awekening?aff=082386531389"
                     ><img
                       alt="Topup Metal Slug Awekening Termurah Terpercaya"
                       sizes="100vw"
@@ -904,7 +586,7 @@
                       " /></a
                   ><a
                     class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
-                    href="https://www.klastergames.com/metal-slug-awekening?aff=081336611571"
+                    href="https://www.klastergames.com/metal-slug-awekening?aff=082386531389"
                     >Metal Slug Awekening</a
                   >
                 </div>
@@ -920,7 +602,7 @@
                 >
                   <a
                     class="block relative aspect-square"
-                    href="https://www.klastergames.com/pulsa-tri?aff=081336611571"
+                    href="https://www.klastergames.com/pulsa-tri?aff=082386531389"
                     ><img
                       alt="Topup Pulsa Tri Termurah Terpercaya"
                       sizes="100vw"
@@ -951,7 +633,7 @@
                       " /></a
                   ><a
                     class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
-                    href="https://www.klastergames.com/pulsa-tri?aff=081336611571"
+                    href="https://www.klastergames.com/pulsa-tri?aff=082386531389"
                     >Pulsa Tri</a
                   >
                 </div>
@@ -960,7 +642,7 @@
                 >
                   <a
                     class="block relative aspect-square"
-                    href="https://www.klastergames.com/pulsa-telkomsel?aff=081336611571"
+                    href="https://www.klastergames.com/pulsa-telkomsel?aff=082386531389"
                     ><img
                       alt="Topup Pulsa Telkomsel Termurah Terpercaya"
                       sizes="100vw"
@@ -991,7 +673,7 @@
                       " /></a
                   ><a
                     class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
-                    href="https://www.klastergames.com/pulsa-telkomsel?aff=081336611571"
+                    href="https://www.klastergames.com/pulsa-telkomsel?aff=082386531389"
                     >Pulsa Telkomsel</a
                   >
                 </div>
@@ -1000,7 +682,7 @@
                 >
                   <a
                     class="block relative aspect-square"
-                    href="https://www.klastergames.com/pulsa-indosat?aff=081336611571"
+                    href="https://www.klastergames.com/pulsa-indosat?aff=082386531389"
                     ><img
                       alt="Topup Pulsa Indosat Termurah Terpercaya"
                       sizes="100vw"
@@ -1031,7 +713,7 @@
                       " /></a
                   ><a
                     class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
-                    href="https://www.klastergames.com/pulsa-indosat?aff=081336611571"
+                    href="https://www.klastergames.com/pulsa-indosat?aff=082386531389"
                     >Pulsa Indosat</a
                   >
                 </div>
@@ -1040,7 +722,7 @@
                 >
                   <a
                     class="block relative aspect-square"
-                    href="https://www.klastergames.com/pulsa-axis?aff=081336611571"
+                    href="https://www.klastergames.com/pulsa-axis?aff=082386531389"
                     ><img
                       alt="Topup Pulsa Axis Termurah Terpercaya"
                       sizes="100vw"
@@ -1071,7 +753,7 @@
                       " /></a
                   ><a
                     class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
-                    href="https://www.klastergames.com/pulsa-axis?aff=081336611571"
+                    href="https://www.klastergames.com/pulsa-axis?aff=082386531389"
                     >Pulsa Axis</a
                   >
                 </div>
@@ -1080,7 +762,7 @@
                 >
                   <a
                     class="block relative aspect-square"
-                    href="https://www.klastergames.com/pulsa-xl?aff=081336611571"
+                    href="https://www.klastergames.com/pulsa-xl?aff=082386531389"
                     ><img
                       alt="Topup Pulsa XL Termurah Terpercaya"
                       sizes="100vw"
@@ -1111,7 +793,7 @@
                       " /></a
                   ><a
                     class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
-                    href="https://www.klastergames.com/pulsa-xl?aff=081336611571"
+                    href="https://www.klastergames.com/pulsa-xl?aff=082386531389"
                     >Pulsa XL</a
                   >
                 </div>
@@ -1120,7 +802,7 @@
                 >
                   <a
                     class="block relative aspect-square"
-                    href="https://www.klastergames.com/pulsa-smartfren?aff=081336611571"
+                    href="https://www.klastergames.com/pulsa-smartfren?aff=082386531389"
                     ><img
                       alt="Topup Pulsa Smartfren Termurah Terpercaya"
                       sizes="100vw"
@@ -1151,7 +833,7 @@
                       " /></a
                   ><a
                     class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
-                    href="https://www.klastergames.com/pulsa-smartfren?aff=081336611571"
+                    href="https://www.klastergames.com/pulsa-smartfren?aff=082386531389"
                     >Pulsa Smartfren</a
                   >
                 </div>
@@ -1167,7 +849,7 @@
                 >
                   <a
                     class="block relative aspect-square"
-                    href="https://www.klastergames.com/saldo-gopay?aff=081336611571"
+                    href="https://www.klastergames.com/saldo-gopay?aff=082386531389"
                     ><img
                       alt="Topup Saldo Gopay Termurah Terpercaya"
                       sizes="100vw"
@@ -1198,7 +880,7 @@
                       " /></a
                   ><a
                     class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
-                    href="https://www.klastergames.com/saldo-gopay?aff=081336611571"
+                    href="https://www.klastergames.com/saldo-gopay?aff=082386531389"
                     >Saldo Gopay</a
                   >
                 </div>
@@ -1207,7 +889,7 @@
                 >
                   <a
                     class="block relative aspect-square"
-                    href="https://www.klastergames.com/saldo-dana?aff=081336611571"
+                    href="https://www.klastergames.com/saldo-dana?aff=082386531389"
                     ><img
                       alt="Topup Saldo DANA Termurah Terpercaya"
                       sizes="100vw"
@@ -1238,7 +920,7 @@
                       " /></a
                   ><a
                     class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
-                    href="https://www.klastergames.com/saldo-dana?aff=081336611571"
+                    href="https://www.klastergames.com/saldo-dana?aff=082386531389"
                     >Saldo DANA</a
                   >
                 </div>
@@ -1247,7 +929,7 @@
                 >
                   <a
                     class="block relative aspect-square"
-                    href="https://www.klastergames.com/saldo-shopeepay?aff=081336611571"
+                    href="https://www.klastergames.com/saldo-shopeepay?aff=082386531389"
                     ><img
                       alt="Topup Saldo ShopeePay Termurah Terpercaya"
                       sizes="100vw"
@@ -1278,7 +960,7 @@
                       " /></a
                   ><a
                     class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
-                    href="https://www.klastergames.com/saldo-shopeepay?aff=081336611571"
+                    href="https://www.klastergames.com/saldo-shopeepay?aff=082386531389"
                     >Saldo ShopeePay</a
                   >
                 </div>
@@ -1294,7 +976,7 @@
                 >
                   <a
                     class="block relative aspect-square"
-                    href="https://www.klastergames.com/steam-wallet-voucher-idr?aff=081336611571"
+                    href="https://www.klastergames.com/steam-wallet-voucher-idr?aff=082386531389"
                     ><img
                       alt="Topup Steam Wallet Voucher (IDR) Termurah Terpercaya"
                       sizes="100vw"
@@ -1325,7 +1007,7 @@
                       " /></a
                   ><a
                     class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
-                    href="https://www.klastergames.com/steam-wallet-voucher-idr?aff=081336611571"
+                    href="https://www.klastergames.com/steam-wallet-voucher-idr?aff=082386531389"
                     >Steam Wallet Voucher (IDR)</a
                   >
                 </div>
@@ -1334,7 +1016,7 @@
                 >
                   <a
                     class="block relative aspect-square"
-                    href="https://www.klastergames.com/google-play-voucher-indonesia?aff=081336611571"
+                    href="https://www.klastergames.com/google-play-voucher-indonesia?aff=082386531389"
                     ><img
                       alt="Topup Google Play Voucher ID Termurah Terpercaya"
                       sizes="100vw"
@@ -1365,7 +1047,7 @@
                       " /></a
                   ><a
                     class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
-                    href="https://www.klastergames.com/google-play-voucher-indonesia?aff=081336611571"
+                    href="https://www.klastergames.com/google-play-voucher-indonesia?aff=082386531389"
                     >Google Play Voucher ID</a
                   >
                 </div>
@@ -1381,7 +1063,7 @@
                 >
                   <a
                     class="block relative aspect-square"
-                    href="https://www.klastergames.com/lita-coins?aff=081336611571"
+                    href="https://www.klastergames.com/lita-coins?aff=082386531389"
                     ><img
                       alt="Topup Lita Coins Termurah Terpercaya"
                       sizes="100vw"
@@ -1412,7 +1094,7 @@
                       " /></a
                   ><a
                     class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
-                    href="https://www.klastergames.com/lita-coins?aff=081336611571"
+                    href="https://www.klastergames.com/lita-coins?aff=082386531389"
                     >Lita Coins</a
                   >
                 </div>
@@ -1421,7 +1103,7 @@
                 >
                   <a
                     class="block relative aspect-square"
-                    href="https://www.klastergames.com/bigo-live?aff=081336611571"
+                    href="https://www.klastergames.com/bigo-live?aff=082386531389"
                     ><img
                       alt="Topup Bigo Live Termurah Terpercaya"
                       sizes="100vw"
@@ -1452,7 +1134,7 @@
                       " /></a
                   ><a
                     class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
-                    href="https://www.klastergames.com/bigo-live?aff=081336611571"
+                    href="https://www.klastergames.com/bigo-live?aff=082386531389"
                     >Bigo Live</a
                   >
                 </div>
@@ -1461,7 +1143,7 @@
                 >
                   <a
                     class="block relative aspect-square"
-                    href="https://www.klastergames.com/token-listrik-pln?aff=081336611571"
+                    href="https://www.klastergames.com/token-listrik-pln?aff=082386531389"
                     ><img
                       alt="Topup Token Listrik PLN Termurah Terpercaya"
                       sizes="100vw"
@@ -1492,7 +1174,7 @@
                       " /></a
                   ><a
                     class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
-                    href="https://www.klastergames.com/token-listrik-pln?aff=081336611571"
+                    href="https://www.klastergames.com/token-listrik-pln?aff=082386531389"
                     >Token Listrik PLN</a
                   >
                 </div>
@@ -1503,71 +1185,32 @@
                 Topup Game dan Pulsa Termurah Tercepat Terpercaya
               </h2>
               <p class="text-xs">
-                Winky Games adalah situs topup game dan pulsa yang paling murah,
-                paling cepat dan paling terpercaya. Sistem kami dapat melayani
-                transaksi Anda hanya dalam hitungan 1-3 detik dan juga hampir
-                tidak pernah delay walau traffic tinggi atau event besar.
+                Clasher Gamify adalah situs topup game dan pulsa yang paling
+                murah, paling cepat dan paling terpercaya. Sistem kami dapat
+                melayani transaksi Anda hanya dalam hitungan 1-3 detik dan juga
+                hampir tidak pernah delay walau traffic tinggi atau event besar.
               </p>
             </div>
             <div class="p-5 pb-8 bg-gray-700 text-gray-400 text-xs">
-              <a
-                class="text-sm bg-gray-800 text-gray-300 p-3 px-4 rounded-md flex w-full items-center"
-                target="_blank"
-                rel="noreferrer"
-                href="https://chat.whatsapp.com/JybV0srYXIH6PiYYi1dGPX"
-                ><div class="relative aspect-square w-[16px] mr-2">
-                  <img
-                    alt="Gabung Grup Winky Games WhatsApp"
-                    sizes="100vw"
-                    srcset="
-                      assets/whatsapp-icon-white_006.webp  640w,
-                      assets/whatsapp-icon-white_007.webp  750w,
-                      assets/whatsapp-icon-white_005.webp  828w,
-                      assets/whatsapp-icon-white_004.webp 1080w,
-                      assets/whatsapp-icon-white_002.webp 1200w,
-                      assets/whatsapp-icon-white_003.webp 1920w,
-                      assets/whatsapp-icon-white_008.webp 2048w,
-                      assets/whatsapp-icon-white.webp     3840w
-                    "
-                    src="assets/whatsapp-icon-white.webp"
-                    decoding="async"
-                    data-nimg="fill"
-                    loading="lazy"
-                    style="
-                      position: absolute;
-                      height: 100%;
-                      width: 100%;
-                      left: 0;
-                      top: 0;
-                      right: 0;
-                      bottom: 0;
-                      object-fit: contain;
-                      color: transparent;
-                    "
-                  />
-                </div>
-                <div>Gabung Grup Gratis</div></a
-              >
-              <hr class="border-gray-600 my-3" />
-              <h2 class="font-semibold text-sm mb-3">Hubungi Winky Games</h2>
+              <h2 class="font-semibold text-sm mb-3">Hubungi Clasher Gamify</h2>
               <div class="mb-2">
                 WhatsApp -<!-- -->
                 <a
                   target="_blank"
                   rel="noreferrer"
                   class="underline font-semibold"
-                  href="https://wa.me/6281336611571"
-                  >0813-3661-1571</a
+                  href="https://wa.me/6282386531389"
+                  >0823-8653-1389</a
                 >
               </div>
               <div class="mb-2">
-                Facebook -<!-- -->
+                Instagram -<!-- -->
                 <a
                   target="_blank"
                   rel="noreferrer"
                   class="underline font-semibold"
-                  href="https://www.facebook.com/Winkyfuu"
-                  >Winkyfuu</a
+                  href="https://www.instagram.com/clashergamify"
+                  >Clasher Gamify</a
                 >
               </div>
             </div>
@@ -1577,10 +1220,10 @@
           <div class="app-container m-auto px-5 py-3 border-t bg-[#e6eee1]">
             <div class="flex items-center justify-around">
               <div class="flex justify-center items-center">
-                <a href="https://www.klastergames.com/?aff=081336611571"
+                <a href="https://www.klastergames.com/?aff=082386531389"
                   ><div class="block relative aspect-square h-4 m-auto">
                     <img
-                      alt="Halaman Awal Winky Games"
+                      alt="Halaman Awal Clasher Gamify"
                       sizes="100vw"
                       srcset="
                         assets/home_007.webp  640w,
@@ -1614,10 +1257,10 @@
               </div>
               <div class="flex justify-center items-center">
                 <a
-                  href="https://www.klastergames.com/transactions?aff=081336611571"
+                  href="https://www.klastergames.com/transactions?aff=082386531389"
                   ><div class="block relative aspect-square h-4 m-auto">
                     <img
-                      alt="Halaman Transaksi Winky Games"
+                      alt="Halaman Transaksi Clasher Gamify"
                       sizes="100vw"
                       srcset="
                         assets/bill_007.webp  640w,
@@ -1650,10 +1293,10 @@
                 >
               </div>
               <div class="flex justify-center items-center">
-                <a href="https://www.klastergames.com/deposit?aff=081336611571"
+                <a href="https://www.klastergames.com/deposit?aff=082386531389"
                   ><div class="block relative aspect-square h-4 m-auto">
                     <img
-                      alt="Halaman Deposit Winky Games"
+                      alt="Halaman Deposit Clasher Gamify"
                       sizes="100vw"
                       srcset="
                         assets/wallet_008.webp  640w,
